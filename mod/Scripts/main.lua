@@ -5,7 +5,6 @@ local pending = false
 local controller = nil
 local announced = {}
 local lastError = nil
-local menu = nil
 
 local function log(message)
     print("[DragonSwordCameraNoDelay] " .. message .. "\n")
@@ -95,7 +94,6 @@ RegisterKeyBind(Key.F9, function()
         run(function()
             local arms = cameras()
             log(string.format("STATUS enabled=%s localCameras=%d", tostring(enabled), #arms))
-            if menu then log("STATUS menuKeyboard=" .. tostring(menu.navigation.enabled)) end
             for _, arm in ipairs(arms) do
                 log(string.format("STATUS %s | rotationLag=%s rotationSpeed=%s locationLag=%s collision=%s",
                     arm:GetFullName(), tostring(arm.bEnableCameraRotationLag), tostring(arm.CameraRotationLagSpeed),
@@ -115,5 +113,4 @@ LoopAsync(100, function()
     return false
 end)
 
-menu = require("menu_keyboard").start(log)
-log("v0.3.0 loaded - F7 menu, F8 camera, F9 status; waiting for the local player camera")
+log("v0.1.0 loaded - F8 toggle, F9 status; waiting for the local player camera")

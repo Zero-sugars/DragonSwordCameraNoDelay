@@ -7,10 +7,10 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <AssemblyName>DragonSword.CameraNoDelay.Setup</AssemblyName>
-    <Version>0.3.0</Version>
-    <FileVersion>0.3.0.0</FileVersion>
-    <Description>드래곤소드 카메라 및 키보드 메뉴 조작 모드 설치 및 삭제</Description>
-    <PayloadArchive Condition="'$(PayloadArchive)' == ''">$(MSBuildProjectDirectory)\..\..\staging\manager-payload-v0.3.0.zip</PayloadArchive>
+    <Version>0.2.1</Version>
+    <FileVersion>0.2.1.0</FileVersion>
+    <Description>드래곤소드 카메라 회전 딜레이 제거 모드 설치 및 삭제</Description>
+    <PayloadArchive Condition="'$(PayloadArchive)' == ''">$(MSBuildProjectDirectory)\..\..\staging\manager-payload-v0.2.1.zip</PayloadArchive>
   </PropertyGroup>
   <ItemGroup>
     <EmbeddedResource Include="$(PayloadArchive)" LogicalName="CameraNoDelay.Payload.zip" />
