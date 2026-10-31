@@ -16,4 +16,8 @@ $errorOutput = $process.StandardError.ReadToEndAsync()
 $process.WaitForExit()
 Write-Output $output.Result
 if ($process.ExitCode -ne 0) { throw $errorOutput.Result }
+if ($output.Result -notmatch 'UI: .* PASS') { throw 'UI test did not run. Close any other installer test instance and retry.' }
+foreach ($image in @('installed.png','removed.png')) {
+    if (-not (Test-Path -LiteralPath (Join-Path $images $image) -PathType Leaf)) { throw "UI test render is missing: $image" }
+}
 Write-Output "Rendered UI images: $images"

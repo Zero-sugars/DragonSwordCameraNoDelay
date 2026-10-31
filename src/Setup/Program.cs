@@ -38,7 +38,7 @@ internal static class Program
                 for (var i = 0; i + 1 < args.Length; i++) if (args[i] == "--image-folder") imageFolder = args[++i];
                 form.Shown += async (_, _) =>
                 {
-                    try { await form.RunUiTestAsync(initialRoot, imageFolder); Console.WriteLine("UI: install/remove buttons, state updates and render PASS"); }
+                    try { await form.RunUiTestAsync(initialRoot, imageFolder); Console.WriteLine("UI: 13-second idle without refresh, manual refresh, install/remove buttons and render PASS"); }
                     catch (Exception error) { uiExitCode = 1; Console.Error.WriteLine(error.Message); }
                     finally { form.Close(); }
                 };

@@ -9,8 +9,10 @@ import subprocess
 import sys
 import time
 import uuid
+import xml.etree.ElementTree as ET
 
 root = Path(__file__).resolve().parents[1]
+version = ET.parse(root / "src" / "Setup" / "DragonSword.CameraNoDelay.Setup.csproj").findtext(".//Version")
 exe = Path(sys.argv[1]).resolve()
 fixture = root / "tests" / "results" / ("setup-한글 (공백) $literal & " + uuid.uuid4().hex)
 game_bin = fixture / "DS" / "Binaries" / "Win64"
@@ -75,7 +77,7 @@ finally:
     guard.kill()
     guard.wait(timeout=10)
 invoke("Install")
-assert invoke("Status")["Version"] == "0.2.0"
+assert invoke("Status")["Version"] == version
 verify_files()
 invoke("Remove")
 assert not record_path.exists() and not (game_bin / "dwmapi.dll").exists()
@@ -89,7 +91,7 @@ if legacy.exists():
     assert result.returncode == 0, result.stderr
     assert invoke("Status")["Version"] == "0.1.0"
     invoke("Install")
-    assert invoke("Status")["Version"] == "0.2.0"
+    assert invoke("Status")["Version"] == version
     verify_files()
 else:
     invoke("Install")
@@ -98,7 +100,15 @@ else:
     record_path.write_text(json.dumps(record), encoding="utf-8")
     assert invoke("Status")["Version"] == "0.1.0"
     invoke("Install")
-    assert invoke("Status")["Version"] == "0.2.0"
+    assert invoke("Status")["Version"] == version
+
+# The previous manager's record is compatible with this patch release too.
+record = read_record()
+record["version"] = "0.2.0"
+record_path.write_text(json.dumps(record), encoding="utf-8")
+assert invoke("Status")["Version"] == "0.2.0"
+invoke("Install")
+assert invoke("Status")["Version"] == version
 
 # A missing tracked file can be repaired, and does not prevent removal.
 missing = game_bin / read_record()["files"][0]["path"]

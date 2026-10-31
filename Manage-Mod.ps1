@@ -117,7 +117,7 @@ try {
         $state = 'not-installed'; $message = '모드가 설치되어 있지 않습니다.'
         if ($oldRecord) { $state='installed'; $message="모드가 설치되어 있습니다. (v$version)" }
         if ($conflict) { $state='conflict'; $message=$conflict }
-        if ($running -and -not $conflict) { $message += ' 게임을 종료하면 설치·삭제할 수 있습니다.' }
+        if ($running -and -not $conflict) { $message += ' 게임을 종료한 뒤 상태 새로고침 버튼을 눌러주세요.' }
         Complete-Result @{ok=$true;gameRoot=$GameRoot;state=$state;version=$version;running=$running;
             canInstall=(-not $running -and -not $conflict);canRemove=([bool]$oldRecord -and -not $running -and -not $conflict);message=$message} $message
         return

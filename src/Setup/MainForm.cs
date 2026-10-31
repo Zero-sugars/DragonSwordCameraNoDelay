@@ -14,7 +14,6 @@ internal sealed class MainForm : Form
     private readonly Button _browse = new() { Text = "폴더 선택", AutoSize = true };
     private readonly Button _discover = new() { Text = "자동 찾기", AutoSize = true };
     private readonly Button _refresh = new() { Text = "상태 새로고침", AutoSize = true };
-    private readonly System.Windows.Forms.Timer _timer = new() { Interval = 6000 };
     private bool _busy;
     private bool _operation;
     private bool _closing;
@@ -23,7 +22,7 @@ internal sealed class MainForm : Form
     internal MainForm(Backend backend, string initialRoot = "")
     {
         _backend = backend;
-        Text = "드래곤소드 카메라 모드 설치 · 삭제  v0.2.0";
+        Text = "드래곤소드 카메라 모드 설치 · 삭제  v0.2.1";
         Font = new Font("맑은 고딕", 10);
         BackColor = Color.FromArgb(247, 249, 252);
         ForeColor = Color.FromArgb(30, 40, 58);
@@ -64,15 +63,12 @@ internal sealed class MainForm : Form
         _remove.Click += async (_, _) => await RunOperationAsync("Remove");
         _path.TextChanged += (_, _) => { if (_path.Text.Trim() != _checkedPath) { _install.Enabled = false; _remove.Enabled = false; } };
         _path.Leave += async (_, _) => { if (!_busy && _path.Text.Trim() != _checkedPath) await RefreshStatusAsync(); };
-        _timer.Tick += async (_, _) => { if (!_busy && !string.IsNullOrWhiteSpace(_path.Text)) await RefreshStatusAsync(); };
         Shown += async (_, _) =>
         {
             if (string.IsNullOrWhiteSpace(initialRoot)) await DiscoverAsync();
             else { _path.Text = initialRoot; await RefreshStatusAsync(); }
-            _timer.Start();
         };
-        FormClosing += (_, e) => { if (_operation) { e.Cancel = true; _result.Text = "파일 작업을 마칠 때까지 잠시 기다려주세요."; } else { _closing = true; _timer.Stop(); } };
-        FormClosed += (_, _) => _timer.Dispose();
+        FormClosing += (_, e) => { if (_operation) { e.Cancel = true; _result.Text = "파일 작업을 마칠 때까지 잠시 기다려주세요."; } else { _closing = true; } };
     }
 
     private void SetBusy(bool value)
@@ -162,6 +158,22 @@ internal sealed class MainForm : Form
         }
         await WaitFor(() => !_busy && _checkedPath == fixtureRoot);
         if (!_install.Enabled || _remove.Enabled) throw new InvalidOperationException("Initial install/remove button states are wrong.");
+        var statusQueries = _backend.StatusQueryCount;
+        var idleStatus = _status.Text;
+        var idleDetail = _detail.Text;
+        var inputStateChanges = 0;
+        EventHandler changed = (_, _) => inputStateChanges++;
+        _path.EnabledChanged += changed;
+        _path.Focus();
+        _path.Select(2, 3);
+        await Task.Delay(13000); // Observe more than two of the old six-second refresh periods.
+        _path.EnabledChanged -= changed;
+        if (_backend.StatusQueryCount != statusQueries || inputStateChanges != 0 || _busy || UseWaitCursor ||
+            _status.Text != idleStatus || _detail.Text != idleDetail || !_path.Enabled ||
+            _path.SelectionStart != 2 || _path.SelectionLength != 3)
+            throw new InvalidOperationException("Idle window refreshed or disturbed its input state.");
+        _refresh.PerformClick();
+        await WaitFor(() => !_busy && _backend.StatusQueryCount == statusQueries + 1);
         _install.PerformClick();
         await WaitFor(() => !_busy && !_operation && _status.Text.StartsWith("설치됨", StringComparison.Ordinal));
         if (!_remove.Enabled) throw new InvalidOperationException("Remove button did not enable after installation.");

@@ -1,7 +1,12 @@
 [CmdletBinding()]
 param([switch]$PayloadOnly)
 $ErrorActionPreference = 'Stop'
-$version = '0.2.0'
+$backendPath = Join-Path $PSScriptRoot 'Manage-Mod.ps1'
+$backendTokens = $null
+$backendErrors = $null
+[Management.Automation.Language.Parser]::ParseFile($backendPath, [ref]$backendTokens, [ref]$backendErrors) | Out-Null
+if ($backendErrors.Count -gt 0) { throw ('Installer script syntax error: ' + ($backendErrors.Message -join '; ')) }
+$version = '0.2.1'
 $release = Join-Path $PSScriptRoot "release\DragonSwordCameraNoDelay-v$version"
 if (-not $PayloadOnly -and (Test-Path -LiteralPath $release)) { throw 'Release folder already exists. Inspect it before rebuilding.' }
 $project = Join-Path $PSScriptRoot 'src\Setup\DragonSword.CameraNoDelay.Setup.csproj'
@@ -65,6 +70,6 @@ $checksumLines = @('DragonSword.CameraNoDelay.Setup.exe', "DragonSwordCameraNoDe
     $hash = (Get-FileHash -LiteralPath (Join-Path $PSScriptRoot "dist\$_") -Algorithm SHA256).Hash.ToLowerInvariant()
     "$hash  $_"
 }
-[IO.File]::WriteAllLines((Join-Path $PSScriptRoot 'dist\SHA256SUMS-v0.2.0.txt'), $checksumLines, [Text.UTF8Encoding]::new($false))
+[IO.File]::WriteAllLines((Join-Path $PSScriptRoot "dist\SHA256SUMS-v$version.txt"), $checksumLines, [Text.UTF8Encoding]::new($false))
 Get-Item -LiteralPath $zip | Select-Object FullName,Length
 Get-FileHash -LiteralPath $zip -Algorithm SHA256

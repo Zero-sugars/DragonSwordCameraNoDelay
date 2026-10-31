@@ -22,6 +22,7 @@ internal sealed class BackendResult
 internal sealed class Backend : IDisposable
 {
     private readonly string _root;
+    internal int StatusQueryCount { get; private set; }
     internal static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
 
     internal Backend()
@@ -37,6 +38,7 @@ internal sealed class Backend : IDisposable
     internal async Task<BackendResult> ExecuteAsync(string action, string gameRoot = "")
     {
         if (action is not ("Discover" or "Status" or "Install" or "Remove")) throw new ArgumentOutOfRangeException(nameof(action));
+        if (action == "Status") StatusQueryCount++;
         var start = new ProcessStartInfo
         {
             FileName = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "WindowsPowerShell", "v1.0", "powershell.exe"),
