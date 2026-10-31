@@ -5,7 +5,7 @@
 ## 설치
 
 1. 게임을 완전히 종료합니다.
-2. [수동 설치용 ZIP](https://github.com/pwj891129-arch/DragonSwordCameraNoDelay/releases/download/v0.1.0/DragonSwordCameraNoDelay-v0.1.0.zip)을 받아 압축을 풉니다.
+2. [수동 설치용 ZIP](https://github.com/Zero-sugars/DragonSwordCameraNoDelay/releases/download/v0.1.0/DragonSwordCameraNoDelay-v0.1.0.zip)을 받아 압축을 풉니다.
 3. ZIP 안의 `DS\Binaries\Win64\ue4ss\Mods\DragonSwordCameraNoDelay` 폴더를 기존 UE4SS의 `Mods` 폴더에 복사합니다.
 4. 기존 `mods.txt`에 다음 줄이 없으면 추가합니다.
 

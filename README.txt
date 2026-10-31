@@ -31,7 +31,7 @@ F8로 켜거나 끌 수 있습니다. 켜짐·꺼짐 알림은 따로 표시되�
 다른 UE4SS 모드를 사용 중이라면 아래 페이지의 수동 설치 안내를 확인하세요.
 
 설치 안내·다운로드·문제 신고
-https://github.com/pwj891129-arch/DragonSwordCameraNoDelay
+https://github.com/Zero-sugars/DragonSwordCameraNoDelay
 
 게임 업데이트 후에는 동작이 달라질 수 있는 비공식 모드입니다.
 라이선스는 배포 ZIP의 licenses 폴더에서 확인할 수 있습니다.

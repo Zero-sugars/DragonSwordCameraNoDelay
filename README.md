@@ -2,7 +2,7 @@
 
 드래곤소드: 어웨이크닝에서 마우스를 움직일 때 카메라가 늦게 따라오는 현상을 없애줍니다.
 
-**[설치·삭제 프로그램 다운로드](https://github.com/pwj891129-arch/DragonSwordCameraNoDelay/releases/latest/download/DragonSword.CameraNoDelay.Setup.exe)** · [ZIP 다운로드](https://github.com/pwj891129-arch/DragonSwordCameraNoDelay/releases/latest)
+**[설치·삭제 프로그램 다운로드](https://github.com/Zero-sugars/DragonSwordCameraNoDelay/releases/latest/download/DragonSword.CameraNoDelay.Setup.exe)** · [ZIP 다운로드](https://github.com/Zero-sugars/DragonSwordCameraNoDelay/releases/latest)
 
 Windows 10/11 64비트용입니다. Steam판 1.1.2에서 확인했으며, 별도 프로그램 설치가 필요하지 않습니다.
 
@@ -33,7 +33,7 @@ Windows 10/11 64비트용입니다. Steam판 1.1.2에서 확인했으며, 별도
 - 게임을 종료했는데 버튼이 비활성화되어 있으면 **상태 새로고침**을 누르세요.
 - 설치 파일이 누락됐다면 **모드 설치 / 업데이트**로 복구할 수 있습니다.
 - 다른 UE4SS 모드를 사용 중이라면 [수동 설치 안내](docs/MANUAL-INSTALL.md)를 확인하세요.
-- 문제가 계속되면 게임 버전과 증상을 적어 [문제를 알려주세요](https://github.com/pwj891129-arch/DragonSwordCameraNoDelay/issues).
+- 문제가 계속되면 게임 버전과 증상을 적어 [문제를 알려주세요](https://github.com/Zero-sugars/DragonSwordCameraNoDelay/issues).
 
 게임 업데이트 후에는 동작이 달라질 수 있습니다. 게임 제작사와 무관한 비공식 모드입니다.
 

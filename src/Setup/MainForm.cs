@@ -49,7 +49,7 @@ internal sealed class MainForm : Form
         _result.Text = "게임을 종료한 상태에서 설치 또는 삭제 버튼을 눌러주세요.";
         _result.Margin = new Padding(0, 0, 0, 12); layout.Controls.Add(_result);
         var help = new LinkLabel { Text = "설치 안내 · 최신 배포 파일", AutoSize = true, Margin = new Padding(0) };
-        help.LinkClicked += (_, _) => Process.Start(new ProcessStartInfo("https://github.com/pwj891129-arch/DragonSwordCameraNoDelay") { UseShellExecute = true });
+        help.LinkClicked += (_, _) => Process.Start(new ProcessStartInfo("https://github.com/Zero-sugars/DragonSwordCameraNoDelay") { UseShellExecute = true });
         layout.Controls.Add(help); Controls.Add(layout);
         _browse.Click += async (_, _) =>
         {
