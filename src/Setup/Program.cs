@@ -18,8 +18,10 @@ internal static class Program
             {
                 if (args.Length < 2) return 2;
                 var root = "";
+                var component = "All";
                 for (var i = 2; i + 1 < args.Length; i++) if (args[i] == "--game-root") root = args[++i];
-                var result = backend.ExecuteAsync(args[1], root).GetAwaiter().GetResult();
+                for (var i = 2; i + 1 < args.Length; i++) if (args[i] == "--component") component = args[++i];
+                var result = backend.ExecuteAsync(args[1], root, component).GetAwaiter().GetResult();
                 Console.OutputEncoding = new System.Text.UTF8Encoding(false);
                 Console.WriteLine(JsonSerializer.Serialize(result));
                 return result.Ok ? 0 : 1;

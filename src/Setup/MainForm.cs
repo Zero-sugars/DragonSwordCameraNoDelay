@@ -9,8 +9,14 @@ internal sealed class MainForm : Form
     private readonly Label _status = new() { AutoSize = true, Text = "설치 상태를 확인하고 있습니다.", Font = new Font("맑은 고딕", 15, FontStyle.Bold) };
     private readonly Label _detail = new() { AutoSize = true, MaximumSize = new Size(750, 0), Text = "" };
     private readonly TextBox _result = new() { Dock = DockStyle.Fill, Multiline = true, ReadOnly = true, ScrollBars = ScrollBars.Vertical, BorderStyle = BorderStyle.FixedSingle, AccessibleName = "처리 결과" };
-    private readonly Button _install = new() { Text = "모드 설치 / 업데이트", AutoSize = true, Padding = new Padding(18, 8, 18, 8) };
-    private readonly Button _remove = new() { Text = "모드 삭제", AutoSize = true, Padding = new Padding(18, 8, 18, 8) };
+    private readonly Button _install = new() { Text = "두 기능 모두 설치 / 업데이트", AutoSize = true, Padding = new Padding(18, 8, 18, 8) };
+    private readonly Button _remove = new() { Text = "전체 삭제", AutoSize = true, Padding = new Padding(18, 8, 18, 8) };
+    private readonly Label _cameraStatus = new() { AutoSize = true, Text = "확인 중", Anchor = AnchorStyles.Left };
+    private readonly Label _menuStatus = new() { AutoSize = true, Text = "확인 중", Anchor = AnchorStyles.Left };
+    private readonly Button _cameraInstall = new() { Text = "설치 / 업데이트", AutoSize = true, Enabled = false };
+    private readonly Button _cameraRemove = new() { Text = "삭제", AutoSize = true, Enabled = false };
+    private readonly Button _menuInstall = new() { Text = "설치 / 업데이트", AutoSize = true, Enabled = false };
+    private readonly Button _menuRemove = new() { Text = "삭제", AutoSize = true, Enabled = false };
     private readonly Button _browse = new() { Text = "폴더 선택", AutoSize = true };
     private readonly Button _discover = new() { Text = "자동 찾기", AutoSize = true };
     private readonly Button _refresh = new() { Text = "상태 새로고침", AutoSize = true };
@@ -22,18 +28,18 @@ internal sealed class MainForm : Form
     internal MainForm(Backend backend, string initialRoot = "")
     {
         _backend = backend;
-        Text = "드래곤소드 카메라 모드 설치 · 삭제  v0.2.1";
+        Text = "드래곤소드 모드 설치 · 삭제  v0.4.0";
         Font = new Font("맑은 고딕", 10);
         BackColor = Color.FromArgb(247, 249, 252);
         ForeColor = Color.FromArgb(30, 40, 58);
-        ClientSize = new Size(850, 590);
-        MinimumSize = new Size(820, 620);
+        ClientSize = new Size(880, 740);
+        MinimumSize = new Size(850, 730);
         StartPosition = FormStartPosition.CenterScreen;
         AutoScaleMode = AutoScaleMode.Dpi;
-        var layout = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(28), ColumnCount = 1, RowCount = 8 };
-        for (var i = 0; i < 8; i++) layout.RowStyles.Add(new RowStyle(i == 6 ? SizeType.Percent : SizeType.AutoSize, i == 6 ? 100 : 0));
-        layout.Controls.Add(new Label { Text = "카메라 회전 딜레이 제거", AutoSize = true, Font = new Font("맑은 고딕", 22, FontStyle.Bold), Margin = new Padding(0, 0, 0, 8) });
-        layout.Controls.Add(new Label { Text = "드래곤소드: 어웨이크닝  ·  설치하면 자동 적용  ·  게임에서 F8로 켜기 / 끄기", AutoSize = true, Margin = new Padding(0, 0, 0, 24) });
+        var layout = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(28), ColumnCount = 1, RowCount = 9 };
+        for (var i = 0; i < 9; i++) layout.RowStyles.Add(new RowStyle(i == 7 ? SizeType.Percent : SizeType.AutoSize, i == 7 ? 100 : 0));
+        layout.Controls.Add(new Label { Text = "카메라 · 키보드 메뉴 모드", AutoSize = true, Font = new Font("맑은 고딕", 22, FontStyle.Bold), Margin = new Padding(0, 0, 0, 8) });
+        layout.Controls.Add(new Label { Text = "F8 카메라  ·  F7 메뉴  ·  지도: WASD 이동 / Q·E 축소·확대 / F 워프", AutoSize = true, Margin = new Padding(0, 0, 0, 24) });
         layout.Controls.Add(new Label { Text = "게임 폴더 — DSClient.exe가 있는 폴더를 선택하세요.", AutoSize = true, Margin = new Padding(0, 0, 0, 6) });
         var pathRow = new TableLayoutPanel { Dock = DockStyle.Top, AutoSize = true, ColumnCount = 3, Margin = new Padding(0, 0, 0, 22) };
         pathRow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
@@ -43,6 +49,14 @@ internal sealed class MainForm : Form
         _path.Margin = new Padding(0, 5, 8, 0); layout.Controls.Add(pathRow);
         var statusCard = new FlowLayoutPanel { FlowDirection = FlowDirection.TopDown, AutoSize = true, Dock = DockStyle.Top, WrapContents = false, BackColor = Color.White, Padding = new Padding(16), Margin = new Padding(0, 0, 0, 18) };
         statusCard.Controls.Add(_status); _detail.Margin = new Padding(3, 10, 3, 2); statusCard.Controls.Add(_detail); layout.Controls.Add(statusCard);
+        var features = new TableLayoutPanel { AutoSize = true, Dock = DockStyle.Top, ColumnCount = 4, RowCount = 2, Padding = new Padding(12), BackColor = Color.White, Margin = new Padding(0, 0, 0, 16) };
+        features.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        for (var i = 0; i < 3; i++) features.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+        features.Controls.Add(new Label { Text = "키보드 메뉴 조작  ·  F7", AutoSize = true, Anchor = AnchorStyles.Left, Margin = new Padding(3, 12, 16, 12) }, 0, 0);
+        features.Controls.Add(_menuStatus, 1, 0); features.Controls.Add(_menuInstall, 2, 0); features.Controls.Add(_menuRemove, 3, 0);
+        features.Controls.Add(new Label { Text = "카메라 딜레이 제거  ·  F8", AutoSize = true, Anchor = AnchorStyles.Left, Margin = new Padding(3, 12, 16, 12) }, 0, 1);
+        features.Controls.Add(_cameraStatus, 1, 1); features.Controls.Add(_cameraInstall, 2, 1); features.Controls.Add(_cameraRemove, 3, 1);
+        layout.Controls.Add(features);
         var actions = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Top, Margin = new Padding(0, 0, 0, 16) };
         _install.BackColor = Color.FromArgb(35, 96, 210); _install.ForeColor = Color.White; _install.FlatStyle = FlatStyle.Flat; _install.FlatAppearance.BorderSize = 0;
         actions.Controls.AddRange([_install, _remove, _refresh]); layout.Controls.Add(actions);
@@ -61,7 +75,11 @@ internal sealed class MainForm : Form
         _refresh.Click += async (_, _) => await RefreshStatusAsync();
         _install.Click += async (_, _) => await RunOperationAsync("Install");
         _remove.Click += async (_, _) => await RunOperationAsync("Remove");
-        _path.TextChanged += (_, _) => { if (_path.Text.Trim() != _checkedPath) { _install.Enabled = false; _remove.Enabled = false; } };
+        _cameraInstall.Click += async (_, _) => await RunOperationAsync("Install", "Camera");
+        _cameraRemove.Click += async (_, _) => await RunOperationAsync("Remove", "Camera");
+        _menuInstall.Click += async (_, _) => await RunOperationAsync("Install", "Menu");
+        _menuRemove.Click += async (_, _) => await RunOperationAsync("Remove", "Menu");
+        _path.TextChanged += (_, _) => { if (_path.Text.Trim() != _checkedPath) DisableActions(); };
         _path.Leave += async (_, _) => { if (!_busy && _path.Text.Trim() != _checkedPath) await RefreshStatusAsync(); };
         Shown += async (_, _) =>
         {
@@ -75,8 +93,12 @@ internal sealed class MainForm : Form
     {
         _busy = value;
         _browse.Enabled = _discover.Enabled = _refresh.Enabled = _path.Enabled = !value;
-        if (value) { _install.Enabled = false; _remove.Enabled = false; }
+        if (value) DisableActions();
         UseWaitCursor = value;
+    }
+    private void DisableActions()
+    {
+        foreach (var button in new[] { _install, _remove, _cameraInstall, _cameraRemove, _menuInstall, _menuRemove }) button.Enabled = false;
     }
     private async Task DiscoverAsync()
     {
@@ -108,18 +130,23 @@ internal sealed class MainForm : Form
             _status.ForeColor = result.State == "conflict" ? Color.FromArgb(160, 70, 20) : Color.FromArgb(30, 65, 110);
             _detail.Text = result.Message;
             _install.Enabled = result.CanInstall; _remove.Enabled = result.CanRemove;
+            _cameraStatus.Text = result.CameraInstalled ? "설치됨" : "설치되지 않음";
+            _menuStatus.Text = result.MenuInstalled ? "설치됨" : "설치되지 않음";
+            _cameraInstall.Enabled = _menuInstall.Enabled = result.CanInstall;
+            _cameraRemove.Enabled = result.CanRemove && result.CameraInstalled;
+            _menuRemove.Enabled = result.CanRemove && result.MenuInstalled;
         }
         catch (Exception error) { if (!_closing) ShowFailure(error.Message); }
         finally { if (!_closing) SetBusy(false); }
     }
-    private async Task RunOperationAsync(string action)
+    private async Task RunOperationAsync(string action, string component = "All")
     {
         if (_busy) return;
         _operation = true; SetBusy(true);
         _result.Text = action == "Install" ? "모드를 설치하고 있습니다…" : "모드를 삭제하고 있습니다…";
         try
         {
-            var result = await _backend.ExecuteAsync(action, _path.Text.Trim());
+            var result = await _backend.ExecuteAsync(action, _path.Text.Trim(), component);
             _result.Text = result.Message;
             if (!string.IsNullOrEmpty(result.BackupPath)) _result.AppendText(Environment.NewLine + Environment.NewLine + "파일 보관 위치: " + result.BackupPath);
             if (!result.Ok) _result.AppendText(Environment.NewLine + "문제를 해결한 뒤 다시 시도하세요.");
@@ -132,7 +159,7 @@ internal sealed class MainForm : Form
     {
         _status.Text = "설치 상태를 확인할 수 없습니다";
         _status.ForeColor = Color.FromArgb(160, 70, 20); _detail.Text = message;
-        _install.Enabled = _remove.Enabled = false;
+        DisableActions();
     }
 
     internal async Task RunUiTestAsync(string fixtureRoot, string imageFolder)
@@ -174,6 +201,20 @@ internal sealed class MainForm : Form
             throw new InvalidOperationException("Idle window refreshed or disturbed its input state.");
         _refresh.PerformClick();
         await WaitFor(() => !_busy && _backend.StatusQueryCount == statusQueries + 1);
+        _menuInstall.PerformClick();
+        await WaitFor(() => !_busy && !_operation && _menuRemove.Enabled);
+        if (_cameraRemove.Enabled || _cameraStatus.Text != "설치되지 않음") throw new InvalidOperationException("Menu-only installation enabled the camera feature.");
+        Render("menu-only.png");
+        _cameraInstall.PerformClick();
+        await WaitFor(() => !_busy && !_operation && _cameraRemove.Enabled);
+        if (!_menuRemove.Enabled) throw new InvalidOperationException("Installing camera removed the menu feature.");
+        Render("installed.png");
+        _menuRemove.PerformClick();
+        await WaitFor(() => !_busy && !_operation && !_menuRemove.Enabled);
+        if (!_cameraRemove.Enabled) throw new InvalidOperationException("Removing menu also removed camera.");
+        Render("camera-only.png");
+        _cameraRemove.PerformClick();
+        await WaitFor(() => !_busy && !_operation && _status.Text == "설치되지 않음");
         _install.PerformClick();
         await WaitFor(() => !_busy && !_operation && _status.Text.StartsWith("설치됨", StringComparison.Ordinal));
         if (!_remove.Enabled) throw new InvalidOperationException("Remove button did not enable after installation.");

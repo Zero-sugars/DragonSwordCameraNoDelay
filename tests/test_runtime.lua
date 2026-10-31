@@ -23,30 +23,33 @@ local remote, localController=ctrl(false,remoteArm), ctrl(true,localArm)
 local list={remote}
 Key={F8=119,F9=120}
 RegisterKeyBind=function(key,callback) keys[key]=callback end
-ExecuteInGameThread=function(callback) callback() end
-LoopAsync=function(_,callback) callbacks[#callbacks+1]=callback end
+ExecuteInGameThread=function() error('Per-key native callback scheduling is unsafe') end
+LoopAsync=function() error('Async-to-game-thread loops must not return') end
+LoopInGameThreadWithDelay=function(delay,callback) callbacks[delay]=callback end
 FindAllOf=function(name) assert(name=='DsCameraControllerComponent'); return list end
 print=function(message) logs[#logs+1]=message end
+package.loaded.menu_keyboard={start=function()return {navigation={enabled=true}}end}
 dofile('mod/Scripts/main.lua')
-local tick=callbacks[1]
+local tick=callbacks[100]
+local function press(key) keys[key]();callbacks[16]() end
 tick()
 assert(remoteArm.bEnableCameraRotationLag==true)
 list={remote,localController}
 tick()
 assert(localArm.bEnableCameraRotationLag==false and localArm.CameraRotationLagSpeed==0)
 assert(remoteArm.bEnableCameraRotationLag==true)
-keys[Key.F8]()
+press(Key.F8)
 assert(localArm.bEnableCameraRotationLag==true and localArm.CameraRotationLagSpeed==10)
 tick()
 assert(localArm.bEnableCameraRotationLag==true)
-keys[Key.F8]()
+press(Key.F8)
 assert(localArm.bEnableCameraRotationLag==false)
 localController.CurrentCharacter=obj('newCharacter')
 localController.CurrentCharacter.SpringArmComponent=swapArm
 tick()
 assert(swapArm.bEnableCameraRotationLag==false)
-keys[Key.F9]()
-keys[Key.F8]()
+press(Key.F9)
+press(Key.F8)
 assert(localArm.bEnableCameraRotationLag==true and swapArm.bEnableCameraRotationLag==true)
 assert(localArm.bEnableCameraLag==true and localArm.bDoCollisionTest==true)
 for _,message in ipairs(logs) do assert(not message:find('ERROR')) end

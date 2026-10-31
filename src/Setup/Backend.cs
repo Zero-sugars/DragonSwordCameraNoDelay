@@ -17,6 +17,9 @@ internal sealed class BackendResult
     public bool CanRemove { get; set; }
     public string Message { get; set; } = "";
     public string BackupPath { get; set; } = "";
+    public bool CameraInstalled { get; set; }
+    public bool MenuInstalled { get; set; }
+    public string[] Components { get; set; } = [];
 }
 
 internal sealed class Backend : IDisposable
@@ -35,9 +38,10 @@ internal sealed class Backend : IDisposable
         archive.ExtractToDirectory(_root);
     }
 
-    internal async Task<BackendResult> ExecuteAsync(string action, string gameRoot = "")
+    internal async Task<BackendResult> ExecuteAsync(string action, string gameRoot = "", string component = "All")
     {
         if (action is not ("Discover" or "Status" or "Install" or "Remove")) throw new ArgumentOutOfRangeException(nameof(action));
+        if (component is not ("All" or "Camera" or "Menu")) throw new ArgumentOutOfRangeException(nameof(component));
         if (action == "Status") StatusQueryCount++;
         var start = new ProcessStartInfo
         {
@@ -51,9 +55,10 @@ internal sealed class Backend : IDisposable
         start.Environment["PSModulePath"] = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "WindowsPowerShell", "v1.0", "Modules");
         var bootstrap = Path.Combine(_root, "Invoke-Backend.ps1");
         if (!File.Exists(bootstrap))
-            File.WriteAllText(bootstrap, "param([string]$Action, [string]$GameRoot)\n[Console]::OutputEncoding = [Text.UTF8Encoding]::new($false)\n& (Join-Path $PSScriptRoot 'Manage-Mod.ps1') -Action $Action -GameRoot $GameRoot -AsJson\n", new UTF8Encoding(true));
+            File.WriteAllText(bootstrap, "param([string]$Action, [string]$GameRoot, [string]$Component = 'All')\n[Console]::OutputEncoding = [Text.UTF8Encoding]::new($false)\n& (Join-Path $PSScriptRoot 'Manage-Mod.ps1') -Action $Action -GameRoot $GameRoot -Component $Component -AsJson\n", new UTF8Encoding(true));
         foreach (var arg in new[] { "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", bootstrap, "-Action", action }) start.ArgumentList.Add(arg);
         if (!string.IsNullOrWhiteSpace(gameRoot)) { start.ArgumentList.Add("-GameRoot"); start.ArgumentList.Add(gameRoot); }
+        start.ArgumentList.Add("-Component"); start.ArgumentList.Add(component);
         using var process = Process.Start(start) ?? throw new InvalidOperationException("설치 도구를 실행하지 못했습니다.");
         var outputTask = process.StandardOutput.ReadToEndAsync();
         var errorTask = process.StandardError.ReadToEndAsync();

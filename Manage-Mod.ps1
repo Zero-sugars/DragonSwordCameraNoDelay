@@ -2,12 +2,30 @@
 param(
     [ValidateSet('Install','Remove','Status','Discover')][string]$Action = 'Install',
     [string]$GameRoot,
+    [ValidateSet('All','Camera','Menu')][string]$Component = 'All',
     [switch]$AsJson
 )
 $ErrorActionPreference = 'Stop'
 Import-Module Microsoft.PowerShell.Utility -ErrorAction Stop
-$allowedPaths = @('dwmapi.dll','ue4ss\LICENSE','ue4ss\UE4SS-settings.ini','ue4ss\UE4SS.dll','ue4ss\Mods\mods.txt',
+$legacyPaths = @('dwmapi.dll','ue4ss\LICENSE','ue4ss\UE4SS-settings.ini','ue4ss\UE4SS.dll','ue4ss\Mods\mods.txt',
     'ue4ss\Mods\DragonSwordCameraNoDelay\Scripts\camera_patch.lua','ue4ss\Mods\DragonSwordCameraNoDelay\Scripts\main.lua')
+$menuPaths = $legacyPaths + @('ue4ss\Mods\DragonSwordCameraNoDelay\Scripts\menu_keyboard.lua','ue4ss\Mods\DragonSwordCameraNoDelay\Scripts\menu_navigation.lua')
+$threadPaths = $menuPaths + @('ue4ss\Mods\DragonSwordCameraNoDelay\Scripts\game_thread.lua')
+$previousPaths = $threadPaths + @('ue4ss\Mods\DragonSwordCameraNoDelay\Scripts\world_map.lua','ue4ss\Mods\DragonSwordCameraNoDelay\Scripts\hotkey_hints.lua')
+$configPath = 'ue4ss\Mods\DragonSwordCameraNoDelay\Scripts\components.lua'
+$allowedPaths = $previousPaths + @($configPath)
+$cameraPaths = @('ue4ss\Mods\DragonSwordCameraNoDelay\Scripts\camera_patch.lua')
+$keyboardPaths = @('ue4ss\Mods\DragonSwordCameraNoDelay\Scripts\menu_keyboard.lua','ue4ss\Mods\DragonSwordCameraNoDelay\Scripts\menu_navigation.lua','ue4ss\Mods\DragonSwordCameraNoDelay\Scripts\world_map.lua','ue4ss\Mods\DragonSwordCameraNoDelay\Scripts\hotkey_hints.lua')
+function Component-Paths($components) {
+    @($allowedPaths | Where-Object { ($_ -notin $cameraPaths -and $_ -notin $keyboardPaths) -or
+        ($_ -in $cameraPaths -and 'camera' -in $components) -or ($_ -in $keyboardPaths -and 'menu' -in $components) })
+}
+function Record-Components($record) {
+    if (-not $record) { return }
+    if ($record.PSObject.Properties['components']) { return @($record.components) }
+    if ($cameraPaths[0] -in @($record.files.path)) { 'camera' }
+    if ($keyboardPaths[0] -in @($record.files.path)) { 'menu' }
+}
 
 function Complete-Result($result, [string]$message) {
     if ($AsJson) { $result | ConvertTo-Json -Depth 6 -Compress } else { Write-Output $message }
@@ -56,11 +74,23 @@ function Resolve-Child([string]$root, [string]$relative) {
 }
 function Read-Record([string]$path) {
     $record = Get-Content -LiteralPath $path -Raw -Encoding UTF8 | ConvertFrom-Json
-    if (@($record.files).Count -ne $allowedPaths.Count) { throw '설치 기록의 파일 목록이 올바르지 않습니다.' }
+    $requiredPaths = $previousPaths
+    if ($record.PSObject.Properties['components']) {
+        $components=@($record.components)
+        if ($components.Count -lt 1 -or $components.Count -gt 2 -or
+            @($components | Select-Object -Unique).Count -ne $components.Count -or
+            @($components | Where-Object { $_ -cnotin @('camera','menu') }).Count -gt 0) { throw '설치 기능 기록이 올바르지 않습니다.' }
+        $requiredPaths = @(Component-Paths $components)
+    }
+    elseif (@($record.files).Count -eq $legacyPaths.Count) { $requiredPaths = $legacyPaths }
+    elseif (@($record.files).Count -eq $menuPaths.Count) { $requiredPaths = $menuPaths }
+    elseif (@($record.files).Count -eq $threadPaths.Count) { $requiredPaths = $threadPaths }
+    elseif (@($record.files).Count -ne $previousPaths.Count) { throw '설치 기록의 파일 목록이 올바르지 않습니다.' }
+    if (@($record.files).Count -ne $requiredPaths.Count) { throw '설치 기록의 파일 목록이 올바르지 않습니다.' }
     $seen = @{}
     foreach ($entry in $record.files) {
         $entry.path = ([string]$entry.path).Replace('/','\')
-        if ($entry.path -notin $allowedPaths -or $seen.ContainsKey($entry.path) -or $entry.sha256 -notmatch '^[0-9a-fA-F]{64}$') {
+        if ($entry.path -notin $requiredPaths -or $seen.ContainsKey($entry.path) -or $entry.sha256 -notmatch '^[0-9a-fA-F]{64}$') {
             throw '설치 기록의 파일 목록 또는 해시가 올바르지 않습니다.'
         }
         $seen[$entry.path] = $true
@@ -112,6 +142,7 @@ try {
             }
         }
     } catch { $conflict = $_.Exception.Message }
+    $installedComponents = @(Record-Components $oldRecord)
     if ($Action -eq 'Status') {
         $version = ''; if ($oldRecord) { $version = [string]$oldRecord.version }
         $state = 'not-installed'; $message = '모드가 설치되어 있지 않습니다.'
@@ -119,12 +150,22 @@ try {
         if ($conflict) { $state='conflict'; $message=$conflict }
         if ($running -and -not $conflict) { $message += ' 게임을 종료한 뒤 상태 새로고침 버튼을 눌러주세요.' }
         Complete-Result @{ok=$true;gameRoot=$GameRoot;state=$state;version=$version;running=$running;
+            components=$installedComponents;cameraInstalled=('camera' -in $installedComponents);menuInstalled=('menu' -in $installedComponents);
             canInstall=(-not $running -and -not $conflict);canRemove=([bool]$oldRecord -and -not $running -and -not $conflict);message=$message} $message
         return
     }
     if ($running) { throw '게임이 실행 중입니다. 드래곤소드를 완전히 종료한 뒤 다시 시도하세요.' }
     if ($conflict) { throw $conflict }
-    if ($Action -eq 'Remove') {
+    $selectedComponents = @('camera','menu')
+    if ($Component -ne 'All') { $selectedComponents=@($Component.ToLowerInvariant()) }
+    $desiredComponents = @($installedComponents)
+    if ($Action -eq 'Install') { $desiredComponents=@('camera','menu') | Where-Object { $_ -in $installedComponents -or $_ -in $selectedComponents } }
+    else {
+        if (-not $oldRecord) { throw '설치 기록이 없어 자동 삭제할 수 없습니다. 변경된 파일은 없습니다.' }
+        if (@($installedComponents | Where-Object { $_ -in $selectedComponents }).Count -eq 0) { throw '선택한 기능이 설치되어 있지 않습니다.' }
+        $desiredComponents=@($installedComponents | Where-Object { $_ -notin $selectedComponents })
+    }
+    if ($Action -eq 'Remove' -and @($desiredComponents).Count -eq 0) {
         if (-not $oldRecord) { throw '설치 기록이 없어 자동 삭제할 수 없습니다. 변경된 파일은 없습니다.' }
         $backup = Resolve-Child $gameBin ('CameraNoDelay-backup-remove-' + (Get-Date -Format 'yyyyMMdd-HHmmss-fff') + '-' + [guid]::NewGuid().ToString('N').Substring(0,8))
         $moved = [Collections.Generic.List[object]]::new()
@@ -153,9 +194,24 @@ try {
     $newRecord = Read-Record $packageManifest
     foreach ($entry in $newRecord.files) {
         $source = Resolve-Child $payloadRoot $entry.path
-        $target = Resolve-Child $gameBin $entry.path
         if ((Get-FileHash -LiteralPath $source -Algorithm SHA256).Hash -ne $entry.sha256) { throw "배포 파일 검증에 실패했습니다: $($entry.path)" }
+    }
+    $desiredPaths=@(Component-Paths @($desiredComponents))
+    $newRecord.files=@($newRecord.files | Where-Object { $_.path -in $desiredPaths })
+    $newRecord | Add-Member -MemberType NoteProperty -Name components -Value @($desiredComponents) -Force
+    $cameraFlag=if ('camera' -in $desiredComponents) { 'true' } else { 'false' }
+    $menuFlag=if ('menu' -in $desiredComponents) { 'true' } else { 'false' }
+    $configText="return { camera=$cameraFlag, menu=$menuFlag }`n"
+    $sha=[Security.Cryptography.SHA256]::Create()
+    try { $configHash=[BitConverter]::ToString($sha.ComputeHash([Text.Encoding]::UTF8.GetBytes($configText))).Replace('-','') }
+    finally { $sha.Dispose() }
+    foreach ($entry in $newRecord.files) { if ($entry.path -eq $configPath) { $entry.sha256=$configHash } }
+    foreach ($entry in $newRecord.files) {
+        $target = Resolve-Child $gameBin $entry.path
         if (-not $oldRecord -and (Test-Path -LiteralPath $target)) { throw "기존 파일을 덮어쓸 수 없습니다: $target" }
+        if ($oldRecord -and $entry.path -notin @($oldRecord.files.path) -and (Test-Path -LiteralPath $target)) {
+            throw "이전 설치 기록에 없는 파일을 덮어쓸 수 없습니다: $target"
+        }
     }
     $backup = ''
     if ($oldRecord) {
@@ -171,6 +227,7 @@ try {
         Copy-Item -LiteralPath $recordPath -Destination (Join-Path $backup 'install-manifest.json')
     }
     $written = [Collections.Generic.List[object]]::new()
+    $removed = [Collections.Generic.List[object]]::new()
     $manifestTemp = Resolve-Child $gameBin ('CameraNoDelay-manifest-' + [guid]::NewGuid().ToString('N') + '.tmp')
     try {
         foreach ($entry in $newRecord.files) {
@@ -179,13 +236,23 @@ try {
             $original = ''; if ($backup) { $original = Resolve-Child $backup $entry.path }
             $written.Add(@{target=$target;original=$original})
             New-Item -ItemType Directory -Path (Split-Path -Parent $target) -Force | Out-Null
-            Copy-Item -LiteralPath $source -Destination $target -Force
+            if ($entry.path -eq $configPath) { [IO.File]::WriteAllText($target,$configText,[Text.UTF8Encoding]::new($false)) }
+            else { Copy-Item -LiteralPath $source -Destination $target -Force }
             if ((Get-FileHash -LiteralPath $target -Algorithm SHA256).Hash -ne $entry.sha256) { throw "설치 파일 확인에 실패했습니다: $($entry.path)" }
         }
-        Copy-Item -LiteralPath $packageManifest -Destination $manifestTemp
+        if ($oldRecord) { foreach ($entry in $oldRecord.files) {
+            if ($entry.path -in @($newRecord.files.path)) { continue }
+            $target=Resolve-Child $gameBin $entry.path
+            if (-not (Test-Path -LiteralPath $target)) { continue }
+            $destination=Resolve-Child $backup $entry.path
+            Move-Item -LiteralPath $target -Destination $destination -Force
+            $removed.Add(@{target=$target;backup=$destination})
+        } }
+        $newRecord | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $manifestTemp -Encoding UTF8
         Move-Item -LiteralPath $manifestTemp -Destination $recordPath -Force
     } catch {
         $failure = $_.Exception.Message
+        foreach ($item in $removed) { Copy-Item -LiteralPath $item.backup -Destination $item.target -Force }
         for ($i=$written.Count-1; $i -ge 0; $i--) {
             $item = $written[$i]
             if ($item.original -and (Test-Path -LiteralPath $item.original -PathType Leaf)) {
@@ -198,7 +265,9 @@ try {
         if (Test-Path -LiteralPath $manifestTemp) { Remove-Item -LiteralPath $manifestTemp }
         throw "설치를 완료하지 못해 이전 상태로 복원했습니다. $failure"
     }
-    Complete-Result @{ok=$true;gameRoot=$GameRoot;state='installed';version=$newRecord.version;backupPath=$backup;message='모드를 설치했습니다. Steam에서 게임을 실행하세요.'} '모드를 설치했습니다. Steam에서 게임을 실행하세요. F8로 켜기·끄기를 전환할 수 있습니다.'
+    $message=if ($Action -eq 'Remove') { '선택한 기능을 삭제했습니다. 나머지 기능은 유지됩니다.' } else { '선택한 기능을 설치했습니다. Steam에서 게임을 실행하세요.' }
+    Complete-Result @{ok=$true;gameRoot=$GameRoot;state='installed';version=$newRecord.version;backupPath=$backup;
+        components=@($desiredComponents);cameraInstalled=('camera' -in $desiredComponents);menuInstalled=('menu' -in $desiredComponents);message=$message} $message
 } catch {
     if ($AsJson) { @{ok=$false;message=$_.Exception.Message} | ConvertTo-Json -Compress; exit 1 }
     throw

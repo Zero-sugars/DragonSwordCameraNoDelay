@@ -1,10 +1,10 @@
-local Patch = require("camera_patch")
-local patch = Patch.new()
-local enabled = true
-local pending = false
+local components = require("components")
+local patch = components.camera and require("camera_patch").new() or nil
+local enabled = components.camera
 local controller = nil
 local announced = {}
 local lastError = nil
+local menu = nil
 
 local function log(message)
     print("[DragonSwordCameraNoDelay] " .. message .. "\n")
@@ -32,6 +32,7 @@ end
 
 local function cameras()
     local result = {}
+    if not components.camera then return result end
     local seen = {}
     local currentController = findController()
     if not currentController then return result end
@@ -74,8 +75,9 @@ local function run(callback)
     end
 end
 
-RegisterKeyBind(Key.F8, function()
-    ExecuteInGameThread(function()
+local thread = require("game_thread").new(log)
+
+if components.camera then thread:bind(Key.F8, function()
         run(function()
             enabled = not enabled
             if enabled then
@@ -86,31 +88,25 @@ RegisterKeyBind(Key.F8, function()
                 log(string.format("OFF - restored %d camera(s)", patch:restore()))
             end
         end)
-    end)
-end)
+end) end
 
-RegisterKeyBind(Key.F9, function()
-    ExecuteInGameThread(function()
+thread:bind(Key.F9, function()
         run(function()
             local arms = cameras()
             log(string.format("STATUS enabled=%s localCameras=%d", tostring(enabled), #arms))
+            if menu then
+                log("STATUS menuKeyboard=" .. tostring(menu.navigation.enabled))
+                if menu.reportStatus then menu.reportStatus() end
+            end
             for _, arm in ipairs(arms) do
                 log(string.format("STATUS %s | rotationLag=%s rotationSpeed=%s locationLag=%s collision=%s",
                     arm:GetFullName(), tostring(arm.bEnableCameraRotationLag), tostring(arm.CameraRotationLagSpeed),
                     tostring(arm.bEnableCameraLag), tostring(arm.bDoCollisionTest)))
             end
         end)
-    end)
 end)
 
-LoopAsync(100, function()
-    if pending then return false end
-    pending = true
-    ExecuteInGameThread(function()
-        run(update)
-        pending = false
-    end)
-    return false
-end)
+if components.camera then thread:loop(100, function() run(update) end) end
 
-log("v0.1.0 loaded - F8 toggle, F9 status; waiting for the local player camera")
+if components.menu then menu = require("menu_keyboard").start(log, { thread=thread }) end
+log("v0.4.0 loaded - F7 menu, F8 camera, F9 status; waiting for the local player camera")

@@ -14,15 +14,21 @@ import xml.etree.ElementTree as ET
 root = Path(__file__).resolve().parents[1]
 version = ET.parse(root / "src" / "Setup" / "DragonSword.CameraNoDelay.Setup.csproj").findtext(".//Version")
 exe = Path(sys.argv[1]).resolve()
-fixture = root / "tests" / "results" / ("setup-한글 (공백) $literal & " + uuid.uuid4().hex)
+fixture_root = Path(os.environ.get('DS_TEST_FIXTURE_ROOT', str(root / 'tests' / 'results')))
+fixture_name = "setup-한글 (공백) $literal & " + uuid.uuid4().hex
+if os.environ.get('DS_TEST_COMPACT_PATH'):
+    fixture_name = "한글 ($literal)& " + uuid.uuid4().hex[:8]
+fixture = fixture_root / fixture_name
 game_bin = fixture / "DS" / "Binaries" / "Win64"
 game_bin.mkdir(parents=True)
 (game_bin / "DSClient-Win64-Shipping.exe").write_bytes(b"original game fixture")
 (game_bin / "unrelated.txt").write_text("preserve me", encoding="utf-8")
 record_path = game_bin / "CameraNoDelay-install-manifest.json"
 
-def invoke(action, ok=True):
-    process = subprocess.run([str(exe), "--action", action, "--game-root", str(fixture)], capture_output=True, encoding="utf-8", timeout=45)
+def invoke(action, ok=True, component=None):
+    args = [str(exe), "--action", action, "--game-root", str(fixture)]
+    if component: args += ['--component',component]
+    process = subprocess.run(args, capture_output=True, encoding="utf-8", timeout=45)
     if not process.stdout.strip():
         raise AssertionError(f"Missing JSON for {action}: {process.stderr}")
     result = json.loads(process.stdout.lstrip("\ufeff"))
@@ -83,6 +89,39 @@ invoke("Remove")
 assert not record_path.exists() and not (game_bin / "dwmapi.dll").exists()
 assert (game_bin / "unrelated.txt").read_text() == "preserve me"
 
+# Each feature is a real installation subset, sharing the loader until the last removal.
+scripts=game_bin/'ue4ss/Mods/DragonSwordCameraNoDelay/Scripts'
+invoke('Install',component='Camera')
+status=invoke('Status')
+assert status['CameraInstalled'] and not status['MenuInstalled'] and len(read_record()['files'])==9
+assert (scripts/'camera_patch.lua').exists() and not (scripts/'menu_keyboard.lua').exists()
+assert 'camera=true, menu=false' in (scripts/'components.lua').read_text()
+camera_bytes=(scripts/'camera_patch.lua').read_bytes()
+invoke('Install',component='Menu')
+assert invoke('Status')['MenuInstalled'] and (scripts/'camera_patch.lua').read_bytes()==camera_bytes
+assert len(read_record()['files'])==13
+before=snapshot()
+with read_lock(scripts/'camera_patch.lua'):
+    invoke('Remove',ok=False,component='Camera')
+assert snapshot()==before,'Failed partial removal must restore every file and manifest'
+invoke('Remove',component='Camera')
+status=invoke('Status');verify_files()
+assert status['MenuInstalled'] and not status['CameraInstalled'] and len(read_record()['files'])==12
+assert not (scripts/'camera_patch.lua').exists() and (scripts/'menu_keyboard.lua').exists() and (game_bin/'dwmapi.dll').exists()
+assert 'camera=false, menu=true' in (scripts/'components.lua').read_text()
+invoke('Install',component='Camera')
+invoke('Remove',component='Menu')
+status=invoke('Status');verify_files()
+assert status['CameraInstalled'] and not status['MenuInstalled']
+assert not (scripts/'menu_keyboard.lua').exists() and (scripts/'camera_patch.lua').exists()
+record_bytes=record_path.read_bytes();tampered=read_record();tampered['components']=['unknown']
+record_path.write_text(json.dumps(tampered),encoding='utf-8')
+assert invoke('Status')['State']=='conflict'
+invoke('Install',ok=False,component='Menu')
+record_path.write_bytes(record_bytes)
+invoke('Remove',component='Camera')
+assert invoke('Status')['State']=='not-installed' and not (game_bin/'dwmapi.dll').exists()
+
 legacy = root / "release" / "DragonSwordCameraNoDelay-v0.1.0"
 if legacy.exists():
     windows_ps_env = os.environ.copy()
@@ -90,6 +129,12 @@ if legacy.exists():
     result = subprocess.run(["powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(legacy / "Manage-Mod.ps1"), "-Action", "Install", "-GameRoot", str(fixture)], capture_output=True, timeout=30, env=windows_ps_env)
     assert result.returncode == 0, result.stderr
     assert invoke("Status")["Version"] == "0.1.0"
+    untracked = game_bin / "ue4ss" / "Mods" / "DragonSwordCameraNoDelay" / "Scripts" / "menu_navigation.lua"
+    untracked.write_text("foreign file: preserve", encoding="utf-8")
+    invoke("Install", ok=False)
+    assert untracked.read_text(encoding="utf-8") == "foreign file: preserve"
+    assert invoke("Status")["Version"] == "0.1.0"
+    untracked.unlink()
     invoke("Install")
     assert invoke("Status")["Version"] == version
     verify_files()
@@ -103,6 +148,31 @@ else:
     assert invoke("Status")["Version"] == version
 
 # The previous manager's record is compatible with this patch release too.
+older_menu = root / 'release' / 'DragonSwordCameraNoDelay-v0.3.0' / 'DragonSword.CameraNoDelay.Setup.exe'
+if older_menu.exists():
+    invoke('Remove')
+    old_install = subprocess.run([str(older_menu), '--action', 'Install', '--game-root', str(fixture)], capture_output=True, encoding='utf-8', timeout=45)
+    assert old_install.returncode == 0, old_install.stderr or old_install.stdout
+    assert invoke('Status')['Version'] == '0.3.0' and len(read_record()['files']) == 9
+    invoke('Install')
+    assert invoke('Status')['Version'] == version and len(read_record()['files']) == 13
+    verify_files()
+
+previous = root / 'release' / 'DragonSwordCameraNoDelay-v0.3.2' / 'DragonSword.CameraNoDelay.Setup.exe'
+if previous.exists():
+    invoke('Remove')
+    result = subprocess.run([str(previous), '--action', 'Install', '--game-root', str(fixture)], capture_output=True, encoding='utf-8', timeout=45)
+    assert result.returncode == 0, result.stderr or result.stdout
+    assert invoke('Status')['Version'] == '0.3.2' and len(read_record()['files']) == 10
+    untracked = game_bin / 'ue4ss' / 'Mods' / 'DragonSwordCameraNoDelay' / 'Scripts' / 'world_map.lua'
+    untracked.write_text('foreign map file',encoding='utf-8')
+    invoke('Install',ok=False)
+    assert untracked.read_text() == 'foreign map file' and invoke('Status')['Version'] == '0.3.2'
+    untracked.unlink()
+    invoke('Install')
+    assert invoke('Status')['Version'] == version and len(read_record()['files']) == 13
+    verify_files()
+
 record = read_record()
 record["version"] = "0.2.0"
 record_path.write_text(json.dumps(record), encoding="utf-8")

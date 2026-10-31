@@ -10,3 +10,5 @@ __pycache__/
 *.pyc
 **/bin/
 **/obj/
+/testing/downloads/
+/testing/.test-tools/
