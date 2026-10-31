@@ -2,17 +2,17 @@
 
 마우스를 움직일 때 카메라가 뒤늦게 따라오는 회전 보간을 끄는 모드입니다. 실행할 때 자동으로 켜지며, **F8**로 원래 동작과 비교할 수 있습니다.
 
-**[배포 파일 다운로드](https://github.com/pwj891129-arch/DragonSwordCameraNoDelay/releases/latest)** · [v0.1.0 ZIP 바로 받기](https://github.com/pwj891129-arch/DragonSwordCameraNoDelay/releases/download/v0.1.0/DragonSwordCameraNoDelay-v0.1.0.zip)
+**[설치·삭제 프로그램 받기](https://github.com/pwj891129-arch/DragonSwordCameraNoDelay/releases/download/v0.2.0/DragonSword.CameraNoDelay.Setup.exe)** · [전체 ZIP 받기](https://github.com/pwj891129-arch/DragonSwordCameraNoDelay/releases/download/v0.2.0/DragonSwordCameraNoDelay-v0.2.0-win-x64.zip) · [최신 릴리스](https://github.com/pwj891129-arch/DragonSwordCameraNoDelay/releases/latest)
 
 ## 설치 방법
 
 1. 드래곤소드를 완전히 종료합니다.
-2. [Releases](https://github.com/pwj891129-arch/DragonSwordCameraNoDelay/releases/latest)에서 **`DragonSwordCameraNoDelay-v0.1.0.zip`**을 받습니다.
-3. ZIP을 새 폴더에 **모두 압축 해제**합니다.
-4. 압축을 푼 폴더의 **`Install.cmd`**를 실행합니다. Steam에 설치된 게임을 자동으로 찾습니다.
-5. 설치 완료 메시지를 확인하고 Steam에서 게임을 실행합니다.
+2. 위 링크에서 **`DragonSword.CameraNoDelay.Setup.exe`**를 받습니다. ZIP으로 받았다면 먼저 압축을 풉니다.
+3. 실행 파일을 열고 자동으로 검색된 **게임 폴더**를 확인합니다. 자동 검색에 실패하면 **폴더 선택**으로 `DSClient.exe`가 있는 폴더를 고릅니다.
+4. **모드 설치 / 업데이트** 버튼을 누릅니다.
+5. ‘설치됨’ 상태를 확인하고 Steam에서 게임을 실행합니다.
 
-GitHub의 `Source code (zip)`은 개발용 소스입니다. 위에 적힌 배포 ZIP을 받아 설치하세요. 별도의 Python이나 .NET 설치는 필요하지 않습니다.
+Windows 10/11 64비트용입니다. 설치 자료와 .NET 런타임이 실행 파일에 포함되어 있어 별도의 Python·.NET 설치나 로더 다운로드가 필요하지 않습니다. GitHub의 `Source code (zip)`은 개발용 소스입니다.
 
 ## 단축키
 
@@ -26,32 +26,27 @@ GitHub의 `Source code (zip)`은 개발용 소스입니다. 위에 적힌 배포
 ## 제거 방법
 
 1. 게임을 완전히 종료합니다.
-2. 배포 ZIP에 포함된 **`Remove.cmd`**를 실행합니다.
+2. 같은 **`DragonSword.CameraNoDelay.Setup.exe`**를 실행합니다.
+3. 게임 폴더와 ‘설치됨’ 상태를 확인하고 **모드 삭제** 버튼을 누릅니다.
 
-설치 파일은 게임 폴더의 `DS\Binaries\Win64\CameraNoDelay-backup-*`로 옮겨 보관합니다. 설치 후 파일을 직접 수정했다면 자동 제거가 중단되므로, 표시된 파일을 먼저 확인하세요.
+‘설치되지 않음’으로 바뀌면 삭제가 완료된 것입니다. 설치 파일은 게임 폴더의 `DS\Binaries\Win64\CameraNoDelay-backup-*`로 옮겨 보관합니다. 설치 후 파일을 직접 수정했거나 다른 UE4SS 모드가 추가됐다면 표시된 안내를 먼저 확인하세요.
 
-## 게임 경로를 찾지 못할 때
+## 기존 0.1.0 사용자는
 
-압축을 푼 폴더에서 PowerShell을 열고 `DSClient.exe`가 들어 있는 게임 폴더를 지정합니다. 아래 경로를 본인의 설치 경로로 바꾸세요.
-
-```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Manage-Mod.ps1 -Action Install -GameRoot 'D:\SteamLibrary\steamapps\common\DragonSword  Awakening'
-```
-
-제거할 때는 `-Action Install`을 `-Action Remove`로 바꿉니다.
+0.1.0의 자동 설치로 설치한 모드도 인식합니다. 게임을 종료하고 새 프로그램에서 **모드 설치 / 업데이트** 또는 **모드 삭제**를 누르세요. 일부 설치 파일이 누락된 경우에는 설치 버튼으로 복구할 수 있습니다.
 
 ## 이미 UE4SS를 설치한 경우
 
 자동 설치 프로그램은 기존 로더를 덮어쓰지 않고 중단합니다. 기존 UE4SS와 함께 사용하려면 다음과 같이 설치하세요.
 
-1. 배포 ZIP 안의 `DS\Binaries\Win64\ue4ss\Mods\DragonSwordCameraNoDelay` 폴더를 기존 UE4SS의 `Mods` 폴더에 복사합니다.
+1. [수동 설치용 ZIP](https://github.com/pwj891129-arch/DragonSwordCameraNoDelay/releases/download/v0.1.0/DragonSwordCameraNoDelay-v0.1.0.zip) 안의 `DS\Binaries\Win64\ue4ss\Mods\DragonSwordCameraNoDelay` 폴더를 기존 UE4SS의 `Mods` 폴더에 복사합니다. 카메라 Lua 모드는 0.2.0과 동일합니다.
 2. 기존 `mods.txt`에 아래 한 줄을 추가합니다.
 
 ```text
 DragonSwordCameraNoDelay : 1
 ```
 
-이 방식으로 설치했다면 `Remove.cmd` 대신 해당 줄을 `DragonSwordCameraNoDelay : 0`으로 바꾸어 비활성화하세요. 기존 로더의 게임 호환성은 별도로 확인해야 합니다.
+이 방식으로 설치했다면 해당 줄을 `DragonSwordCameraNoDelay : 0`으로 바꾸어 비활성화하세요. 수동 설치한 모드는 설치 기록이 없어 새 프로그램에서 자동 삭제하지 않습니다. 기존 로더의 게임 호환성은 별도로 확인해야 합니다.
 
 ## 확인한 환경
 
@@ -61,6 +56,7 @@ DragonSwordCameraNoDelay : 1
 | Steam 앱 / 빌드 | 4570720 / 26210326 |
 | 엔진 | Unreal Engine 5.3 |
 | 포함된 로더 | UE4SS 3.0.1-1188-gf885e8d2 |
+| 설치·삭제 프로그램 | 0.2.0 / Windows x64 |
 
 실제 게임에서 적용과 F8 복원을 확인했고, 사용자 테스트에서 카메라 회전 딜레이가 없어졌음을 확인했습니다. 캐릭터 교체 시 다시 적용하는 로직은 자동 테스트를 통과했습니다. 탑승·컷신·협동 플레이를 포함한 모든 상황을 검증한 버전은 아니며, 게임 업데이트 후에는 호환성을 다시 확인해야 합니다.
 
@@ -74,14 +70,14 @@ DragonSwordCameraNoDelay : 1
 
 ## 소스에서 빌드하기
 
-배포 ZIP에는 실행에 필요한 로더와 Lua 스크립트가 포함되어 있습니다. 소스를 수정해 새 패키지를 만들려면 Windows와 **PowerShell 7**을 사용하세요.
+설치 실행 파일에 로더·Lua 스크립트와 설치 도구가 포함되어 있습니다. 소스를 수정해 새 패키지를 만들려면 Windows, **.NET 10 SDK**, **PowerShell 7**을 사용하세요.
 
 ```powershell
 pwsh -File .\Get-Dependencies.ps1
 pwsh -File .\Build.ps1
 ```
 
-결과는 `dist\DragonSwordCameraNoDelay-v0.1.0.zip`에 생성됩니다. `release`에 같은 버전 폴더가 이미 있으면 덮어쓰지 않고 중단합니다. UE4SS 의존성 다운로드 시 SHA256을 검증하며, 기존 배포 ZIP으로 준비할 수도 있습니다.
+결과는 `dist\DragonSword.CameraNoDelay.Setup.exe`와 `dist\DragonSwordCameraNoDelay-v0.2.0-win-x64.zip`에 생성됩니다. `release`에 같은 버전 폴더가 이미 있으면 덮어쓰지 않고 중단합니다. UE4SS 의존성 다운로드 시 SHA256을 검증하며, 기존 0.1.0 배포 ZIP으로 로더를 준비할 수도 있습니다.
 
 ```powershell
 pwsh -File .\Get-Dependencies.ps1 -ReleaseArchive 'C:\Downloads\DragonSwordCameraNoDelay-v0.1.0.zip'
@@ -92,9 +88,13 @@ pwsh -File .\Get-Dependencies.ps1 -ReleaseArchive 'C:\Downloads\DragonSwordCamer
 ```powershell
 python -m pip install --target .\tools\python -r .\tests\requirements.txt
 python .\tests\run.py
-pwsh -File .\tests\Test-Installer.ps1 -PackageRoot .\release\DragonSwordCameraNoDelay-v0.1.0
+pwsh -File .\tests\Test-Installer.ps1 -PackageRoot .\staging\manager-payload-v0.2.0
+python .\tests\test_setup.py .\dist\DragonSword.CameraNoDelay.Setup.exe
+pwsh -File .\tests\Test-Ui.ps1
 ```
 
 ## 포함된 오픈소스
 
 UE4SS는 [UE4SS-RE/RE-UE4SS](https://github.com/UE4SS-RE/RE-UE4SS)의 공식 배포본이며 MIT 라이선스를 따릅니다. [라이선스 전문](third-party/UE4SS-LICENSE.txt)과 [배포 정보](THIRD-PARTY-NOTICES.md)를 포함합니다.
+
+자체 실행을 위한 Microsoft .NET 런타임과 관련 라이선스·고지도 포함합니다. ZIP 배포본의 `licenses` 폴더에서 확인할 수 있습니다.

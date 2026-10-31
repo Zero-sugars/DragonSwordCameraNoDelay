@@ -12,3 +12,9 @@ The release ZIP includes UE4SS and its proxy DLL from the official project:
 The release also retains the upstream license at `DS/Binaries/Win64/ue4ss/LICENSE`. Its configuration disables the GUI console, hot reload, and automatic Lua reload. The default bundled console and cheat-related example mods are not included in this mod's release.
 
 Python dependencies are used only for development and tests. They are not included in the release ZIP. `lupa` is pinned in `tests/requirements.txt`.
+
+## Microsoft .NET runtime (installer v0.2.0)
+
+The self-contained Windows installer includes the Microsoft .NET and Windows Desktop runtime. Their license and third-party notices are embedded with the installer payload and included in the ZIP distribution under `licenses/Microsoft.NETCore.App.Runtime.win-x64` and `licenses/Microsoft.WindowsDesktop.App.Runtime.win-x64`.
+
+Project: [dotnet/runtime](https://github.com/dotnet/runtime), [dotnet/windowsdesktop](https://github.com/dotnet/windowsdesktop). License and notice files are copied from the exact runtime packages selected by the build.
