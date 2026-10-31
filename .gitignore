@@ -1,0 +1,10 @@
+/tools/
+/vendor/
+/staging/
+/release/
+/dist/
+/analysis/
+/diagnostics/
+/tests/results/
+__pycache__/
+*.pyc
