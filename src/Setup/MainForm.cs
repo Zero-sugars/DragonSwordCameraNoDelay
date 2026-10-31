@@ -22,7 +22,7 @@ internal sealed class MainForm : Form
     internal MainForm(Backend backend, string initialRoot = "")
     {
         _backend = backend;
-        Text = "드래곤소드 카메라 모드 설치 · 삭제  v0.2.1";
+        Text = "드래곤소드 카메라 · 메뉴 모드 설치 · 삭제  v0.3.0";
         Font = new Font("맑은 고딕", 10);
         BackColor = Color.FromArgb(247, 249, 252);
         ForeColor = Color.FromArgb(30, 40, 58);
@@ -32,8 +32,8 @@ internal sealed class MainForm : Form
         AutoScaleMode = AutoScaleMode.Dpi;
         var layout = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(28), ColumnCount = 1, RowCount = 8 };
         for (var i = 0; i < 8; i++) layout.RowStyles.Add(new RowStyle(i == 6 ? SizeType.Percent : SizeType.AutoSize, i == 6 ? 100 : 0));
-        layout.Controls.Add(new Label { Text = "카메라 회전 딜레이 제거", AutoSize = true, Font = new Font("맑은 고딕", 22, FontStyle.Bold), Margin = new Padding(0, 0, 0, 8) });
-        layout.Controls.Add(new Label { Text = "드래곤소드: 어웨이크닝  ·  설치하면 자동 적용  ·  게임에서 F8로 켜기 / 끄기", AutoSize = true, Margin = new Padding(0, 0, 0, 24) });
+        layout.Controls.Add(new Label { Text = "카메라 · 키보드 메뉴 모드", AutoSize = true, Font = new Font("맑은 고딕", 22, FontStyle.Bold), Margin = new Padding(0, 0, 0, 8) });
+        layout.Controls.Add(new Label { Text = "F8 카메라  ·  F7 메뉴  ·  WASD 이동 / Space 확인 / Q·E 탭 전환", AutoSize = true, Margin = new Padding(0, 0, 0, 24) });
         layout.Controls.Add(new Label { Text = "게임 폴더 — DSClient.exe가 있는 폴더를 선택하세요.", AutoSize = true, Margin = new Padding(0, 0, 0, 6) });
         var pathRow = new TableLayoutPanel { Dock = DockStyle.Top, AutoSize = true, ColumnCount = 3, Margin = new Padding(0, 0, 0, 22) };
         pathRow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
@@ -49,7 +49,7 @@ internal sealed class MainForm : Form
         _result.Text = "게임을 종료한 상태에서 설치 또는 삭제 버튼을 눌러주세요.";
         _result.Margin = new Padding(0, 0, 0, 12); layout.Controls.Add(_result);
         var help = new LinkLabel { Text = "설치 안내 · 최신 배포 파일", AutoSize = true, Margin = new Padding(0) };
-        help.LinkClicked += (_, _) => Process.Start(new ProcessStartInfo("https://github.com/pwj891129-arch/DragonSwordCameraNoDelay") { UseShellExecute = true });
+        help.LinkClicked += (_, _) => Process.Start(new ProcessStartInfo("https://github.com/Zero-sugars/DragonSwordCameraNoDelay") { UseShellExecute = true });
         layout.Controls.Add(help); Controls.Add(layout);
         _browse.Click += async (_, _) =>
         {

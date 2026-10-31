@@ -6,7 +6,7 @@ $backendTokens = $null
 $backendErrors = $null
 [Management.Automation.Language.Parser]::ParseFile($backendPath, [ref]$backendTokens, [ref]$backendErrors) | Out-Null
 if ($backendErrors.Count -gt 0) { throw ('Installer script syntax error: ' + ($backendErrors.Message -join '; ')) }
-$version = '0.2.1'
+$version = '0.3.0'
 $release = Join-Path $PSScriptRoot "release\DragonSwordCameraNoDelay-v$version"
 if (-not $PayloadOnly -and (Test-Path -LiteralPath $release)) { throw 'Release folder already exists. Inspect it before rebuilding.' }
 $project = Join-Path $PSScriptRoot 'src\Setup\DragonSword.CameraNoDelay.Setup.csproj'
@@ -21,7 +21,7 @@ Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'vendor\UE4SS\dwmapi.dll') -Dest
 foreach ($file in @('UE4SS.dll','UE4SS-settings.ini','LICENSE')) {
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot "vendor\UE4SS\ue4ss\$file") -Destination $loader
 }
-foreach ($file in @('main.lua','camera_patch.lua')) {
+foreach ($file in @('main.lua','camera_patch.lua','menu_keyboard.lua','menu_navigation.lua')) {
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot "mod\Scripts\$file") -Destination $scripts
 }
 [IO.File]::WriteAllText((Join-Path $loader 'Mods\mods.txt'), "DragonSwordCameraNoDelay : 1`n", [Text.UTF8Encoding]::new($false))
@@ -65,8 +65,15 @@ foreach ($file in @('README.txt','THIRD-PARTY-NOTICES.md')) { Copy-Item -Literal
 New-Item -ItemType Directory -Path (Join-Path $PSScriptRoot 'dist') -Force | Out-Null
 $zip = Join-Path $PSScriptRoot "dist\DragonSwordCameraNoDelay-v$version-win-x64.zip"
 Compress-Archive -LiteralPath $release -DestinationPath $zip -CompressionLevel Optimal
+$manual = Join-Path $PSScriptRoot "staging\manual-v$version"
+$manualScripts = Join-Path $manual 'DragonSwordCameraNoDelay\Scripts'
+New-Item -ItemType Directory -Path $manualScripts -Force | Out-Null
+Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot 'mod\Scripts') -Filter '*.lua' -File | Copy-Item -Destination $manualScripts
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'docs\MANUAL-INSTALL.md') -Destination $manual
+$manualZip = Join-Path $PSScriptRoot "dist\DragonSwordCameraNoDelay-v$version-mod-only.zip"
+Compress-Archive -Path (Join-Path $manual '*') -DestinationPath $manualZip -CompressionLevel Optimal
 Copy-Item -LiteralPath (Join-Path $release 'DragonSword.CameraNoDelay.Setup.exe') -Destination (Join-Path $PSScriptRoot 'dist\DragonSword.CameraNoDelay.Setup.exe') -Force
-$checksumLines = @('DragonSword.CameraNoDelay.Setup.exe', "DragonSwordCameraNoDelay-v$version-win-x64.zip") | ForEach-Object {
+$checksumLines = @('DragonSword.CameraNoDelay.Setup.exe', "DragonSwordCameraNoDelay-v$version-win-x64.zip", "DragonSwordCameraNoDelay-v$version-mod-only.zip") | ForEach-Object {
     $hash = (Get-FileHash -LiteralPath (Join-Path $PSScriptRoot "dist\$_") -Algorithm SHA256).Hash.ToLowerInvariant()
     "$hash  $_"
 }

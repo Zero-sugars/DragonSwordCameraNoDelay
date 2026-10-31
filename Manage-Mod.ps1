@@ -6,8 +6,9 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 Import-Module Microsoft.PowerShell.Utility -ErrorAction Stop
-$allowedPaths = @('dwmapi.dll','ue4ss\LICENSE','ue4ss\UE4SS-settings.ini','ue4ss\UE4SS.dll','ue4ss\Mods\mods.txt',
+$legacyPaths = @('dwmapi.dll','ue4ss\LICENSE','ue4ss\UE4SS-settings.ini','ue4ss\UE4SS.dll','ue4ss\Mods\mods.txt',
     'ue4ss\Mods\DragonSwordCameraNoDelay\Scripts\camera_patch.lua','ue4ss\Mods\DragonSwordCameraNoDelay\Scripts\main.lua')
+$allowedPaths = $legacyPaths + @('ue4ss\Mods\DragonSwordCameraNoDelay\Scripts\menu_keyboard.lua','ue4ss\Mods\DragonSwordCameraNoDelay\Scripts\menu_navigation.lua')
 
 function Complete-Result($result, [string]$message) {
     if ($AsJson) { $result | ConvertTo-Json -Depth 6 -Compress } else { Write-Output $message }
@@ -56,11 +57,13 @@ function Resolve-Child([string]$root, [string]$relative) {
 }
 function Read-Record([string]$path) {
     $record = Get-Content -LiteralPath $path -Raw -Encoding UTF8 | ConvertFrom-Json
-    if (@($record.files).Count -ne $allowedPaths.Count) { throw '설치 기록의 파일 목록이 올바르지 않습니다.' }
+    $requiredPaths = $allowedPaths
+    if (@($record.files).Count -eq $legacyPaths.Count) { $requiredPaths = $legacyPaths }
+    elseif (@($record.files).Count -ne $allowedPaths.Count) { throw '설치 기록의 파일 목록이 올바르지 않습니다.' }
     $seen = @{}
     foreach ($entry in $record.files) {
         $entry.path = ([string]$entry.path).Replace('/','\')
-        if ($entry.path -notin $allowedPaths -or $seen.ContainsKey($entry.path) -or $entry.sha256 -notmatch '^[0-9a-fA-F]{64}$') {
+        if ($entry.path -notin $requiredPaths -or $seen.ContainsKey($entry.path) -or $entry.sha256 -notmatch '^[0-9a-fA-F]{64}$') {
             throw '설치 기록의 파일 목록 또는 해시가 올바르지 않습니다.'
         }
         $seen[$entry.path] = $true
@@ -156,6 +159,9 @@ try {
         $target = Resolve-Child $gameBin $entry.path
         if ((Get-FileHash -LiteralPath $source -Algorithm SHA256).Hash -ne $entry.sha256) { throw "배포 파일 검증에 실패했습니다: $($entry.path)" }
         if (-not $oldRecord -and (Test-Path -LiteralPath $target)) { throw "기존 파일을 덮어쓸 수 없습니다: $target" }
+        if ($oldRecord -and $entry.path -notin @($oldRecord.files.path) -and (Test-Path -LiteralPath $target)) {
+            throw "이전 설치 기록에 없는 파일을 덮어쓸 수 없습니다: $target"
+        }
     }
     $backup = ''
     if ($oldRecord) {
@@ -198,7 +204,7 @@ try {
         if (Test-Path -LiteralPath $manifestTemp) { Remove-Item -LiteralPath $manifestTemp }
         throw "설치를 완료하지 못해 이전 상태로 복원했습니다. $failure"
     }
-    Complete-Result @{ok=$true;gameRoot=$GameRoot;state='installed';version=$newRecord.version;backupPath=$backup;message='모드를 설치했습니다. Steam에서 게임을 실행하세요.'} '모드를 설치했습니다. Steam에서 게임을 실행하세요. F8로 켜기·끄기를 전환할 수 있습니다.'
+    Complete-Result @{ok=$true;gameRoot=$GameRoot;state='installed';version=$newRecord.version;backupPath=$backup;message='모드를 설치했습니다. Steam에서 게임을 실행하세요. F7: 메뉴 조작, F8: 카메라.'} '모드를 설치했습니다. Steam에서 게임을 실행하세요. F7: 메뉴 조작, F8: 카메라.'
 } catch {
     if ($AsJson) { @{ok=$false;message=$_.Exception.Message} | ConvertTo-Json -Compress; exit 1 }
     throw

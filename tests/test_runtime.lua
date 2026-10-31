@@ -27,6 +27,7 @@ ExecuteInGameThread=function(callback) callback() end
 LoopAsync=function(_,callback) callbacks[#callbacks+1]=callback end
 FindAllOf=function(name) assert(name=='DsCameraControllerComponent'); return list end
 print=function(message) logs[#logs+1]=message end
+package.loaded.menu_keyboard={start=function()return {navigation={enabled=true}}end}
 dofile('mod/Scripts/main.lua')
 local tick=callbacks[1]
 tick()

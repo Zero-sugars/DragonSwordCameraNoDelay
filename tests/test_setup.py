@@ -90,6 +90,12 @@ if legacy.exists():
     result = subprocess.run(["powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(legacy / "Manage-Mod.ps1"), "-Action", "Install", "-GameRoot", str(fixture)], capture_output=True, timeout=30, env=windows_ps_env)
     assert result.returncode == 0, result.stderr
     assert invoke("Status")["Version"] == "0.1.0"
+    untracked = game_bin / "ue4ss" / "Mods" / "DragonSwordCameraNoDelay" / "Scripts" / "menu_navigation.lua"
+    untracked.write_text("foreign file: preserve", encoding="utf-8")
+    invoke("Install", ok=False)
+    assert untracked.read_text(encoding="utf-8") == "foreign file: preserve"
+    assert invoke("Status")["Version"] == "0.1.0"
+    untracked.unlink()
     invoke("Install")
     assert invoke("Status")["Version"] == version
     verify_files()

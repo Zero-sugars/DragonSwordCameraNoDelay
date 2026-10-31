@@ -16,7 +16,7 @@ if (-not $ReleaseArchive) {
     } catch {
         Write-Output 'Pinned upstream asset unavailable; using the verified v0.1.0 release archive.'
         $ReleaseArchive = Join-Path $downloadRoot 'DragonSwordCameraNoDelay-v0.1.0.zip'
-        Invoke-WebRequest -Uri 'https://github.com/pwj891129-arch/DragonSwordCameraNoDelay/releases/download/v0.1.0/DragonSwordCameraNoDelay-v0.1.0.zip' -OutFile $ReleaseArchive
+        Invoke-WebRequest -Uri 'https://github.com/Zero-sugars/DragonSwordCameraNoDelay/releases/download/v0.1.0/DragonSwordCameraNoDelay-v0.1.0.zip' -OutFile $ReleaseArchive
     }
     if (-not $ReleaseArchive) {
         Assert-Hash $upstream '4a594fb5c6e1aa794b06a770730e072c53fb92b741f95a5f0601080d80f4a6c1'
